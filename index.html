@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>카페 제목 생성기</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: #333;
+    }
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        overflow: hidden;
+    }
+    header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 26px;
+        text-align: center;
+    }
+    header h1 { font-size: 26px; margin-bottom: 6px; }
+    header p { opacity: 0.9; font-size: 14px; }
+    header p.credit {
+        margin-top: 10px;
+        font-size: 12px;
+        opacity: 0.75;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    .content { padding: 26px; }
+    label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #555;
+        font-size: 14px;
+    }
+    .command-box {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 16px;
+        font-family: 'Malgun Gothic', sans-serif;
+        margin-bottom: 12px;
+    }
+    .command-box:focus { outline: none; border-color: #667eea; }
+    .recommend-box {
+        background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
+        border: 1px solid #d8dcf5;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+    }
+    .recommend-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #4f46e5;
+        margin-bottom: 10px;
+    }
+    .recommend-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 6px;
+    }
+    .example-chip {
+        padding: 8px 12px;
+        background: white;
+        color: #4f46e5;
+        border-radius: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        border: 1px solid #d8dcf5;
+        transition: all 0.15s;
+        text-align: center;
+    }
+    .example-chip:hover { background: #4f46e5; color: white; transform: translateY(-1px); }
+    .options-row {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 14px;
+        background: #f7f8fc;
+        border-radius: 8px;
+        margin-bottom: 14px;
+    }
+    .option-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .option-item label { margin: 0; font-weight: 500; }
+    .option-item input[type="number"] {
+        padding: 8px 10px;
+        border: 1px solid #d0d0d0;
+        border-radius: 6px;
+        font-size: 14px;
+        width: 90px;
+    }
+    .buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+    button {
+        padding: 12px 22px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-size: 16px;
+        padding: 14px 30px;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(102,126,234,0.4); }
+    .btn-secondary { background: #f0f0f5; color: #555; }
+    .btn-secondary:hover { background: #e4e4ec; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-success:hover { background: #0ea271; }
+    .btn-warn { background: #f59e0b; color: white; }
+    .btn-warn:hover { background: #d97706; }
+
+    .count-display {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .count-card {
+        flex: 1;
+        min-width: 150px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 18px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 14px rgba(102,126,234,0.3);
+    }
+    .count-card .num { font-size: 36px; font-weight: 700; line-height: 1.1; }
+    .count-card .label { font-size: 12px; opacity: 0.9; margin-top: 5px; }
+    .count-card.greet { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 14px rgba(16,185,129,0.3); }
+    .count-card.attend { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 4px 14px rgba(245,158,11,0.3); }
+    .count-card.daily { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); box-shadow: 0 4px 14px rgba(236,72,153,0.3); }
+    .count-card .num.small { font-size: 28px; }
+
+    .title-list {
+        background: #fafbff;
+        border: 1px solid #e0e4f0;
+        border-radius: 10px;
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 6px;
+    }
+    .title-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        margin: 4px;
+        background: white;
+        border-radius: 6px;
+        border-left: 3px solid #667eea;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-size: 14px;
+    }
+    .title-item.greet { border-left-color: #10b981; }
+    .title-item.attend { border-left-color: #f59e0b; }
+    .title-item.daily { border-left-color: #ec4899; }
+    .title-item:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .title-num { color: #999; font-size: 12px; min-width: 40px; }
+    .title-text { flex: 1; padding: 0 10px; }
+    .title-tag {
+        padding: 3px 9px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        color: white;
+    }
+    .title-tag.greet { background: #10b981; }
+    .title-tag.attend { background: #f59e0b; }
+    .title-tag.daily { background: #ec4899; }
+    .empty { text-align: center; padding: 40px; color: #999; }
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #333;
+        color: white;
+        padding: 14px 22px;
+        border-radius: 8px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.3s;
+        pointer-events: none;
+        z-index: 1000;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #c8cfee, transparent);
+        margin: 36px 0 22px;
+    }
+    .section-heading {
+        font-size: 22px;
+        color: #4f46e5;
+        margin-bottom: 6px;
+    }
+    .section-desc {
+        color: #777;
+        font-size: 13px;
+        margin-bottom: 14px;
+        line-height: 1.6;
+    }
+    #shuffleInput {
+        width: 100%;
+        min-height: 150px;
+        padding: 14px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 13px;
+        font-family: 'Consolas', 'Malgun Gothic', monospace;
+        resize: vertical;
+        margin-bottom: 12px;
+    }
+    #shuffleInput:focus { outline: none; border-color: #667eea; }
+    .title-tag.topic { background: #6366f1; }
+    .title-tag.unknown { background: #94a3b8; }
+    .title-item.topic { border-left-color: #6366f1; }
+    .title-item.unknown { border-left-color: #94a3b8; }
+    .cat-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 12px;
+    }
+    .cat-pill {
+        background: #eef0ff;
+        color: #4f46e5;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+    .footer-credit {
+        text-align: center;
+        margin-top: 36px;
+        padding: 18px;
+        color: #999;
+        font-size: 13px;
+        border-top: 1px solid #eee;
+        letter-spacing: 0.5px;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>✨ 카페 제목 생성기</h1>
+        <p>명령어를 입력하면 카페 인기글 제목을 자동으로 만들어드립니다</p>
+        <p class="credit">제작: 좋은여행연구소</p>
+    </header>
+
+    <div class="content">
+        <label for="command">📝 명령어 입력</label>
+        <input type="text" id="command" class="command-box" placeholder="예: 운동 일상글 100개">
+
+        <div class="recommend-box">
+            <div class="recommend-title">💡 추천 명령어 — 클릭하면 자동 입력됩니다</div>
+            <div class="recommend-grid">
+                <div class="example-chip" onclick="setCmd('인사글 100개')">👋 인사글 100개</div>
+                <div class="example-chip" onclick="setCmd('출석글 100개')">✅ 출석글 100개</div>
+                <div class="example-chip" onclick="setCmd('운동 일상글 100개')">💪 운동 100개</div>
+                <div class="example-chip" onclick="setCmd('음식 일상글 100개')">🍚 음식 100개</div>
+                <div class="example-chip" onclick="setCmd('날씨 일상글 100개')">🌦️ 날씨 100개</div>
+                <div class="example-chip" onclick="setCmd('육아 일상글 100개')">👶 육아 100개</div>
+                <div class="example-chip" onclick="setCmd('직장 일상글 100개')">🏢 직장 100개</div>
+                <div class="example-chip" onclick="setCmd('스트레스 일상글 100개')">😩 스트레스 100개</div>
+                <div class="example-chip" onclick="setCmd('취미 일상글 100개')">🎨 취미 100개</div>
+                <div class="example-chip" onclick="setCmd('여행 일상글 100개')">✈️ 여행 100개</div>
+                <div class="example-chip" onclick="setCmd('건강 일상글 100개')">💊 건강 100개</div>
+                <div class="example-chip" onclick="setCmd('공부 일상글 100개')">📚 공부 100개</div>
+                <div class="example-chip" onclick="setCmd('카페 일상글 100개')">☕ 카페 100개</div>
+                <div class="example-chip" onclick="setCmd('반려동물 일상글 100개')">🐶 반려동물 100개</div>
+                <div class="example-chip" onclick="setCmd('쇼핑 일상글 100개')">🛍️ 쇼핑 100개</div>
+                <div class="example-chip" onclick="setCmd('전체 혼합 1000개')">🎲 전체 혼합 1000개</div>
+                <div class="example-chip" onclick="setCmd('인사글 1000개')">🔥 인사글 1000개</div>
+                <div class="example-chip" onclick="setCmd('출석글 1000개')">🔥 출석글 1000개</div>
+                <div class="example-chip" onclick="setCmd('일상글 1000개')">🔥 일상글 1000개</div>
+                <div class="example-chip" onclick="setCmd('전체 혼합 1000개')">🔥 전체 1000개</div>
+            </div>
+        </div>
+
+        <div class="options-row">
+            <div class="option-item">
+                <label>📊 생성 개수:</label>
+                <input type="number" id="count" value="100" min="1" max="5000">
+            </div>
+            <div class="option-item">
+                <input type="checkbox" id="dedupe" checked>
+                <label for="dedupe">중복 제거</label>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-primary" onclick="generate()">🚀 제목 생성하기</button>
+            <button class="btn-success" onclick="copyAll()">📋 전체 복사</button>
+            <button class="btn-warn" onclick="downloadTxt()">💾 메모장(.txt) 저장</button>
+            <button class="btn-secondary" onclick="clearAll()">🗑️ 초기화</button>
+        </div>
+
+        <div id="resultArea">
+            <div class="empty">위에 명령어를 입력하고 <strong>제목 생성하기</strong> 버튼을 눌러주세요</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2 class="section-heading">🔀 제목 셔플 도구</h2>
+        <p class="section-desc">메모장에서 복사한 제목 목록을 붙여넣으면 <strong>같은 소재가 연달아 나오지 않게</strong> 섞어드립니다 (한 줄에 하나씩)</p>
+
+        <textarea id="shuffleInput" placeholder="셔플할 제목 목록을 여기에 붙여넣으세요...&#10;예시:&#10;운동 시작했어요&#10;안녕하세요 가입했습니다&#10;오늘 비 어떠세요?&#10;..."></textarea>
+
+        <div class="options-row">
+            <div class="option-item">
+                <input type="radio" name="shuffleMode" id="modeSmart" value="smart" checked>
+                <label for="modeSmart">🧠 스마트 셔플 (같은 소재 연달아 X)</label>
+            </div>
+            <div class="option-item">
+                <input type="radio" name="shuffleMode" id="modeRandom" value="random">
+                <label for="modeRandom">🎲 단순 랜덤 셔플</label>
+            </div>
+            <div class="option-item">
+                <input type="checkbox" id="shuffleDedupe" checked>
+                <label for="shuffleDedupe">중복 제거</label>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-primary" onclick="doShuffle()">🔀 셔플 실행</button>
+            <button class="btn-secondary" onclick="loadGeneratedToShuffle()">⬆️ 위에서 생성한 제목 가져오기</button>
+            <button class="btn-success" onclick="copyShuffleResult()">📋 결과 복사</button>
+            <button class="btn-warn" onclick="downloadShuffleTxt()">💾 메모장(.txt) 저장</button>
+            <button class="btn-secondary" onclick="clearShuffle()">🗑️ 초기화</button>
+        </div>
+
+        <div id="shuffleResultArea"></div>
+
+        <div class="footer-credit">제작: 좋은여행연구소</div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============== 인사글 ==============
+const TPL_GREET = [
+    '안녕하세요 처음 인사드립니다',
+    '{today} 가입 인사 올려요',
+    '{today} 가입했어요 잘 부탁드려요',
+    '{nick}입니다 잘 부탁드립니다',
+    '눈팅만 하다가 처음 글 써봐요',
+    '카페 가입하고 첫 인사드려요',
+    '반갑습니다 여러분',
+    '{today} 가입한 {nick}이에요',
+    '{nick} 인사드립니다 잘 부탁드려요',
+    '안녕하세요 잘 부탁드립니다',
+    '처음 가입했어요 환영해주세요',
+    '카페에 가입한지 얼마 안 됐어요',
+    '{today} 인사드려요',
+    '{today}부터 활동 시작합니다',
+    '여러분 반갑습니다',
+    '안녕하세요 회원님들',
+    '반가워요 여러분',
+    '잘 부탁드립니다 {nick}이에요',
+    '안녕하세요 {today} 가입 인사 올립니다',
+    '카페 회원님들 반갑습니다',
+    '눈팅 졸업하고 첫 글 남겨요',
+    '안녕하세요 {nick}입니다',
+    '처음으로 글 올려봅니다',
+    '인사드리고 시작할게요',
+    '{today} 가입한 {nick}예요',
+    '드디어 가입했어요',
+    '안녕하세요 잘 지내봐요',
+    '인사 늦어서 죄송해요',
+    '카페 활동 시작합니다',
+    '소심하게 인사드려요',
+    '늦었지만 인사드립니다',
+    '안녕하세요 새로 왔어요',
+    '회원이 된 지 얼마 안 됐어요',
+    '눈팅하다 용기내서 인사드려요',
+    '{nick} 회원입니다 잘 부탁드려요',
+    '처음 인사드립니다 반가워요',
+    '안녕하세요 활동 시작해요',
+    '{today} 가입 인사드려요',
+    '카페 가족 여러분 반갑습니다',
+    '소박한 첫 인사 드려요',
+    '{nick}로 인사드려요',
+    '{today} 입성한 {nick}입니다',
+    '안녕하세요 {nick} 신고합니다',
+    '잘 부탁드려요 여러분',
+    '안녕하세요 인사 올립니다',
+    '{today} 처음 인사드려요',
+    '카페에 처음 가입했습니다',
+    '{nick} 첫 글 남겨봅니다',
+    '안녕하세요 가입했어요',
+    '{today} 활동 시작하는 {nick}',
+    '눈팅족 졸업합니다',
+    '{nick}이 인사드려요',
+    '{today} 막 가입했어요',
+    '안녕하세요 활동 잘해볼게요',
+    '카페 가입 신고합니다',
+    '{today} 새로 왔습니다',
+    '{nick}예요 잘 부탁드립니다',
+    '간단히 인사드릴게요',
+    '안녕하세요 인사 올려요',
+    '카페에 첫 글 남깁니다',
+];
+
+// ============== 출석글 ==============
+const TPL_ATTEND = [
+    '오늘도 출석합니다',
+    '{weekday} 출석체크',
+    '{weekday} 출첵하고 갑니다',
+    '오늘도 출첵!',
+    '{timeOfDay} 출석이요',
+    '또 왔습니다',
+    '오늘도 다녀가요',
+    '출석체크 하고 갑니다',
+    '{timeOfDay} 출석체크',
+    '여기 왔어요',
+    '오늘도 출석~',
+    '{weekday} 잘 보내고 계신가요',
+    '{timeOfDay} 인사겸 출석',
+    '도착했습니다 오늘도',
+    '오늘도 들렀습니다',
+    '출석 도장 쾅',
+    '출석하고 갈게요',
+    '{weekday} 아침 출첵',
+    '오늘도 다녀갔습니다',
+    '{weekday} 출석 인증',
+    '매일 출석 중이에요',
+    '꾸준히 출석합니다',
+    '{timeOfDay} 출석체크요',
+    '오늘도 한 번 들렀어요',
+    '오늘도 다녀가요 좋은 하루',
+    '출석 인사드립니다',
+    '여기 왔다 갑니다',
+    '오늘도 출석 완료',
+    '{weekday} 출석체크 하고 가요',
+    '오늘 하루도 출첵',
+    '잠깐 들러서 출석합니다',
+    '{timeOfDay} 출석 도장',
+    '하루 시작 출첵',
+    '오늘도 어김없이 출석',
+    '출석 신고합니다',
+    '{weekday} 무사히 보내고 출첵',
+    '안녕하세요 출석합니다',
+    '오늘도 빠짐없이 출첵',
+    '{timeOfDay} 잠깐 들렀어요',
+    '오늘 하루도 화이팅 출첵',
+];
+
+// ============== 일상글 (주제별 그룹) ==============
+const DAILY_GROUPS = {
+    weather: {
+        words: ['날씨','기온','비','눈','바람','햇살','구름','미세먼지','장마','폭염','한파'],
+        templates: [
+            '오늘 {topic} 어떠세요?',
+            '요즘 {topic} 너무 심하네요',
+            '{topic} 때문에 힘드네요',
+            '{topic} 진짜 좋아요',
+            '오늘 {topic} 좋네요',
+            '{topic} 심한 날',
+            '오늘 {topic} 진짜 별로네요',
+            '{topic} 너무 좋아요',
+            '{topic} 어떻게 지내세요',
+            '요즘 {topic} 어떠세요',
+            '{topic} 영향 많이 받으시나요',
+            '오늘 같은 {topic} 좋아하시나요',
+            '{topic} 때문에 컨디션 난조',
+            '{topic} 좋은 날 뭐하세요',
+            '내일 {topic} 어떻대요',
+            '요즘 {topic} 변덕 심하죠',
+            '{topic} 보면서 한잔',
+            '{topic} 때문에 외출 못해요',
+            '이런 {topic}엔 뭐가 좋을까요',
+            '{topic} 조심하세요 다들',
+        ]
+    },
+    exercise: {
+        words: ['운동','헬스','요가','필라테스','달리기','등산','홈트','스트레칭','수영','자전거','걷기'],
+        templates: [
+            '{topic} 시작했어요',
+            '오늘 {topic} 다녀왔어요',
+            '{topic} 한 달 후기',
+            '{topic} 추천 부탁드려요',
+            '{topic} 같이 하실 분',
+            '{topic} 처음 해봤어요',
+            '{topic} 어떻게 시작하셨어요',
+            '{topic} 진짜 추천해요',
+            '오늘도 {topic} 완료',
+            '{topic} 한 지 한 달 됐어요',
+            '{topic} 효과 있나요',
+            '{topic} 너무 힘들어요',
+            '{topic} 하고 나서 변화',
+            '{topic} 입문자입니다',
+            '{topic} 도전 중입니다',
+            '{topic} 후기 공유해요',
+            '{topic} 매일 하시나요',
+            '{topic} 노하우 알려주세요',
+            '{topic} 일주일 후기',
+            '{topic} 같이 하실 분 찾아요',
+            '{topic} 끝나고 한 잔',
+            '오늘도 {topic} 다녀왔습니다',
+            '{topic}으로 살 빠질까요',
+            '{topic} 초보 질문이요',
+            '{topic} 30분 했어요',
+        ]
+    },
+    food: {
+        words: ['음식','요리','반찬','저녁 메뉴','점심','아침','간식','디저트','커피','배달 음식','집밥','외식'],
+        templates: [
+            '{topic} 추천 좀 해주세요',
+            '오늘 {topic} 뭐 드셨어요',
+            '{topic} 만들어봤어요',
+            '오늘 {topic} 너무 맛있어요',
+            '{topic} 고민이에요',
+            '{topic} 메뉴 뭐가 좋을까요',
+            '{topic} 후기 남겨요',
+            '{topic} 만들기 어려워요',
+            '오늘의 {topic}',
+            '간단한 {topic} 추천해주세요',
+            '{topic} 잘하는 비결',
+            '{topic} 같이 드실 분',
+            '{topic} 진짜 맛있게 먹었어요',
+            '오늘 {topic} 자랑해요',
+            '{topic} 노하우 공유해요',
+            '뭐 먹지... {topic} 추천',
+            '{topic} 도전했어요',
+            '집에서 {topic} 만들었어요',
+            '{topic} 좋아하시나요',
+            '{topic} 한 끼 후기',
+            '{topic} 사진 공유해요',
+            '오늘 점심은 {topic}',
+            '맛있는 {topic} 발견했어요',
+        ]
+    },
+    place: {
+        words: ['카페','맛집','펜션','호텔','병원','학원'],
+        templates: [
+            '{topic} 다녀왔어요',
+            '{topic} 추천해주세요',
+            '오늘 가본 {topic}',
+            '괜찮은 {topic} 아세요',
+            '{topic} 후기 공유해요',
+            '{topic} 어디가 좋을까요',
+            '{topic} 갔다 왔어요',
+            '동네 {topic} 추천',
+            '{topic} 다녀온 후기',
+            '오늘 들른 {topic}',
+            '{topic} 가볼만한 곳',
+            '{topic} 이용 후기',
+            '{topic} 좀 알려주세요',
+            '{topic} 정보 공유해요',
+            '예쁜 {topic} 발견했어요',
+            '괜찮은 {topic} 찾고 있어요',
+            '{topic} 처음 가봤어요',
+            '단골 {topic} 있으세요',
+        ]
+    },
+    child: {
+        words: ['아이','육아','아이 학교','아이 밥','아이 교육','초등 아이','어린이집','유치원','아이 친구','아이 건강'],
+        templates: [
+            '{topic} 어떻게 하세요',
+            '{topic} 고민이에요',
+            '{topic} 너무 힘들어요',
+            '요즘 {topic} 때문에',
+            '{topic} 조언 부탁드려요',
+            '{topic} 경험 있으신 분',
+            '{topic} 어떻게 해야 할까요',
+            '{topic} 진짜 어려워요',
+            '{topic} 노하우 알려주세요',
+            '{topic} 도와주세요',
+            '{topic} 걱정돼요',
+            '{topic} 잘하고 계신가요',
+            '{topic} 한 줄 후기',
+            '{topic} 일기 남겨요',
+            '오늘 {topic} 이야기',
+            '{topic} 정보 공유해요',
+            '{topic} 추천 부탁드려요',
+            '{topic} 어떻게 시작하셨어요',
+            '{topic} 후기 들려주세요',
+            '{topic} 같이 얘기해요',
+            '요즘 {topic} 너무 힘드네요',
+        ]
+    },
+    health: {
+        words: ['건강','병원','감기','피부','체중','수면','피로','컨디션'],
+        templates: [
+            '요즘 {topic} 어떠세요',
+            '{topic} 관리 어떻게 하세요',
+            '{topic} 고민이에요',
+            '{topic} 진짜 중요하네요',
+            '{topic} 챙기고 계신가요',
+            '{topic} 회복 중이에요',
+            '오늘 {topic} 별로예요',
+            '{topic} 추천 부탁드려요',
+            '{topic} 너무 안 좋아요',
+            '{topic} 좋아지는 법',
+            '{topic} 관리 노하우',
+            '{topic} 신경 쓰고 계세요',
+            '{topic} 어떻게 챙기시나요',
+            '요즘 {topic} 걱정',
+            '{topic} 후기 공유해요',
+            '{topic} 점점 안 좋아져요',
+            '{topic} 좋아지는 법 알려주세요',
+            '{topic} 관리 시작했어요',
+            '{topic} 진짜 잘 챙기세요',
+        ]
+    },
+    work: {
+        words: ['직장','회사','업무','상사','동료','출근','퇴근','월급','회식','야근','승진','이직'],
+        templates: [
+            '{topic} 너무 힘들어요',
+            '{topic} 고민이에요',
+            '오늘 {topic} 이야기',
+            '{topic} 어떻게 하세요',
+            '요즘 {topic} 때문에',
+            '{topic} 진짜 스트레스',
+            '{topic} 그만두고 싶어요',
+            '{topic} 조언 부탁드려요',
+            '{topic} 너무 짜증나요',
+            '{topic} 어떻게 견디세요',
+            '오늘도 {topic} 끝',
+            '{topic} 일기 남겨요',
+            '{topic} 푸념 좀 할게요',
+            '{topic} 다들 그러세요',
+            '{topic} 답이 안 나와요',
+            '{topic} 한탄 좀 해도 되나요',
+            '{topic} 분위기 어떠세요',
+            '{topic} 견디는 법',
+            '{topic} 노하우 알려주세요',
+            '{topic} 같이 푸념해요',
+            '{topic} 너무 지쳐요',
+        ]
+    },
+    stress: {
+        words: ['스트레스','짜증','피곤','번아웃','우울','불안','걱정','마음','감정','기분'],
+        templates: [
+            '요즘 {topic} 너무 심해요',
+            '{topic} 어떻게 푸세요',
+            '{topic} 풀 방법 추천',
+            '{topic} 때문에 힘들어요',
+            '오늘 {topic} 한가득',
+            '{topic} 풀고 싶어요',
+            '{topic} 다스리는 법',
+            '{topic} 너무 많아요 요즘',
+            '{topic} 어떻게 관리하세요',
+            '{topic} 풀기 좋은 거 추천',
+            '{topic} 견디는 중이에요',
+            '{topic} 떨치는 법 알려주세요',
+            '{topic} 진짜 답이 없네요',
+            '{topic} 같이 풀어요',
+            '{topic} 한 번 토로해도 될까요',
+            '{topic} 푼 후기',
+            '오늘 {topic} 진짜 심해요',
+            '{topic} 어디다 풀어요',
+            '{topic} 글로 풀어봐요',
+            '{topic} 잠재우는 법',
+        ]
+    },
+    hobby: {
+        words: ['취미','독서','드라마','영화','게임','음악','뜨개질','그림','사진','베이킹','반려동물'],
+        templates: [
+            '{topic} 추천해주세요',
+            '요즘 빠진 {topic}',
+            '{topic} 같이 하실 분',
+            '{topic} 후기 공유해요',
+            '{topic} 시작했어요',
+            '{topic} 어떻게 시작하셨어요',
+            '{topic} 진짜 재밌어요',
+            '{topic} 빠져들었어요',
+            '{topic} 입문자입니다',
+            '오늘의 {topic}',
+            '{topic} 일기 남겨요',
+            '{topic} 노하우 알려주세요',
+            '{topic} 매력에 빠졌어요',
+            '{topic} 처음 도전해봤어요',
+            '{topic} 한 달 후기',
+            '{topic} 같이 얘기해요',
+            '{topic} 좋아하시는 분',
+            '{topic} 빠져 사는 중',
+            '{topic} 시간이 너무 좋아요',
+            '{topic} 추천 부탁해요',
+        ]
+    },
+    travel: {
+        words: ['여행','국내 여행','해외 여행','휴가','드라이브','산책'],
+        templates: [
+            '{topic} 다녀왔어요',
+            '{topic} 추천해주세요',
+            '{topic} 계획 중이에요',
+            '{topic} 후기 공유해요',
+            '{topic} 어디가 좋을까요',
+            '{topic} 가고 싶어요',
+            '오늘의 {topic}',
+            '{topic} 노하우 알려주세요',
+            '{topic} 사진 자랑해요',
+            '{topic} 같이 가실 분',
+            '{topic} 정보 공유해요',
+            '{topic} 다녀온 후기',
+            '{topic} 코스 추천',
+            '{topic} 짐 싸는 팁',
+            '{topic} 처음 가봐요',
+            '혼자 {topic} 어떨까요',
+            '{topic} 예산 어느 정도',
+            '{topic} 한 번 다녀와볼까',
+            '{topic} 진짜 좋네요',
+        ]
+    },
+    study: {
+        words: ['공부','시험','자격증','영어','강의','학원','독서','자기계발'],
+        templates: [
+            '{topic} 시작했어요',
+            '{topic} 너무 어려워요',
+            '{topic} 노하우 알려주세요',
+            '{topic} 추천 부탁드려요',
+            '{topic} 도전 중입니다',
+            '{topic} 같이 하실 분',
+            '{topic} 후기 남겨요',
+            '오늘 {topic} 했어요',
+            '{topic} 진도 안 나가요',
+            '{topic} 어떻게 하세요',
+            '{topic} 동기부여',
+            '{topic} 한 달 후기',
+            '{topic} 입문 추천',
+            '{topic} 매일 하고 있어요',
+            '{topic} 책 추천',
+            '{topic} 같이 해요',
+            '{topic} 슬럼프 왔어요',
+            '{topic} 합격 후기',
+            '{topic} 시간 안 나요',
+            '{topic} 잘하는 법',
+        ]
+    },
+    shopping: {
+        words: ['쇼핑','옷','화장품','가전','신발','가방'],
+        templates: [
+            '{topic} 추천해주세요',
+            '오늘 산 {topic} 자랑해요',
+            '{topic} 후기 공유해요',
+            '{topic} 고민이에요',
+            '{topic} 어디서 사세요',
+            '{topic} 너무 사고 싶어요',
+            '{topic} 가성비 추천',
+            '{topic} 사고 후회 안 해요',
+            '{topic} 잘 산 거 같아요',
+            '{topic} 데일리템',
+            '{topic} 이번 달 지름',
+            '요즘 산 {topic}',
+            '{topic} 진짜 마음에 들어요',
+            '{topic} 추천템',
+        ]
+    },
+};
+
+const W = {
+    weekday: ['월요일','화요일','수요일','목요일','금요일','토요일','일요일'],
+    timeOfDay: ['아침','점심','저녁','오후','새벽'],
+    nick: ['새내기','뉴비','초보','신입','막내','회원','후배','일원'],
+    today: ['오늘','오늘도','이번 주','이번 달','오랜만에','다시','처음으로','요즘'],
+};
+
+// 가중치 풀 (빈 문자열 비율로 자연스러움 조절)
+const SYMBOL_POOL = [
+    '','','','','','','','','','','','','','','','',  // 무기호 (~50%)
+    '~','~~','~~~','~ㅎ','~^^',                       // 물결
+    '!','!!','!!!','!?','?!',                          // 느낌표
+    'ㅎㅎ','ㅎㅎㅎ','ㅎㅎㅎㅎ',                          // 웃음(약)
+    'ㅋㅋ','ㅋㅋㅋ','ㅋㅋㅋㅋ',                          // 웃음(센)
+    'ㅠㅠ','ㅠㅠㅠ','ㅜㅜ',                              // 우는
+    '..','...','....',                                  // 점점
+    '^^','^^*','^_^',                                  // 미소
+    ';;','...;;','..ㅠ',                                // 식은땀
+    ' :)',' :(',                                        // 이모티콘
+];
+
+function applySymbol(text) {
+    // 이미 끝맺음 기호가 있으면 그대로
+    const tail = text.slice(-2);
+    if (/[?!~ㅎㅋㅠㅜ.;)^]/.test(text.slice(-1)) || /ㅎㅎ|ㅋㅋ|ㅠㅠ|ㅜㅜ/.test(tail)) {
+        // 약 20% 확률로 추가 강조
+        if (Math.random() < 0.2) {
+            const extras = ['','','','','!','~','ㅎㅎ','ㅋㅋ'];
+            return text + pick(extras);
+        }
+        return text;
+    }
+    return text + pick(SYMBOL_POOL);
+}
+
+// ============== 명령어 → 그룹 매핑 ==============
+const KEYWORD_TO_GROUP = {
+    '날씨':'weather','기온':'weather','비':'weather','눈':'weather','바람':'weather','미세먼지':'weather','장마':'weather','폭염':'weather','한파':'weather','햇살':'weather',
+    '운동':'exercise','헬스':'exercise','요가':'exercise','필라테스':'exercise','달리기':'exercise','등산':'exercise','홈트':'exercise','수영':'exercise','자전거':'exercise','걷기':'exercise',
+    '음식':'food','요리':'food','맛집':'place','메뉴':'food','간식':'food','커피':'food','배달':'food','집밥':'food','외식':'food','반찬':'food','디저트':'food','점심':'food','저녁':'food',
+    '카페':'place','펜션':'place','호텔':'place','병원':'health','학원':'study',
+    '아이':'child','육아':'child','자녀':'child','초등':'child','어린이집':'child','유치원':'child',
+    '건강':'health','감기':'health','피부':'health','체중':'health','수면':'health','피로':'health','컨디션':'health','약':'health','다이어트':'exercise',
+    '직장':'work','회사':'work','업무':'work','상사':'work','동료':'work','출근':'work','퇴근':'work','월급':'work','회식':'work','야근':'work','승진':'work','이직':'work',
+    '스트레스':'stress','짜증':'stress','번아웃':'stress','우울':'stress','불안':'stress','걱정':'stress','마음':'stress','감정':'stress','기분':'stress',
+    '취미':'hobby','독서':'study','드라마':'hobby','영화':'hobby','게임':'hobby','음악':'hobby','뜨개질':'hobby','그림':'hobby','사진':'hobby','베이킹':'hobby','반려동물':'hobby','반려견':'hobby','강아지':'hobby','고양이':'hobby',
+    '여행':'travel','휴가':'travel','드라이브':'travel','산책':'travel',
+    '공부':'study','시험':'study','자격증':'study','영어':'study','강의':'study','자기계발':'study',
+    '쇼핑':'shopping','옷':'shopping','화장품':'shopping','가전':'shopping','신발':'shopping','가방':'shopping',
+};
+
+// ============== 유틸 ==============
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function fillTemplate(tpl, group) {
+    return tpl.replace(/\{(\w+)\}/g, (m, key) => {
+        if (key === 'topic' && group) return pick(group.words);
+        if (W[key]) return pick(W[key]);
+        return m;
+    });
+}
+
+// ============== 명령어 파싱 ==============
+function parseCommand(cmd) {
+    const result = { categories: [], groups: [], count: null };
+    const text = cmd.trim();
+
+    if (/인사(글)?|첫인사|가입\s*인사/.test(text)) result.categories.push('greet');
+    if (/출석(글)?|출첵|체크인/.test(text)) result.categories.push('attend');
+    if (/일상(글)?|이야기|일기|썰/.test(text)) result.categories.push('daily');
+
+    const groupSet = new Set();
+    for (const [kw, group] of Object.entries(KEYWORD_TO_GROUP)) {
+        if (text.includes(kw)) groupSet.add(group);
+    }
+    result.groups = [...groupSet];
+
+    if (result.groups.length > 0 && !result.categories.includes('daily')) {
+        result.categories.push('daily');
+    }
+
+    const m = text.match(/(\d+)\s*(개|건|편|줄)?/);
+    if (m) result.count = parseInt(m[1]);
+
+    if (result.categories.length === 0) {
+        result.categories = ['greet','attend','daily'];
+    }
+
+    return result;
+}
+
+// ============== 제목 생성 ==============
+function generateOne(category, groups) {
+    if (category === 'greet') {
+        return { text: applySymbol(fillTemplate(pick(TPL_GREET))), category };
+    }
+    if (category === 'attend') {
+        return { text: applySymbol(fillTemplate(pick(TPL_ATTEND))), category };
+    }
+    // daily: 그룹 선택
+    let pool = groups;
+    if (!pool || pool.length === 0) {
+        pool = Object.keys(DAILY_GROUPS);
+    }
+    const groupKey = pick(pool);
+    const group = DAILY_GROUPS[groupKey];
+    return { text: applySymbol(fillTemplate(pick(group.templates), group)), category: 'daily' };
+}
+
+let generated = [];
+
+function generate() {
+    const cmd = document.getElementById('command').value.trim();
+    const countInput = parseInt(document.getElementById('count').value) || 100;
+    const dedupe = document.getElementById('dedupe').checked;
+
+    const parsed = parseCommand(cmd);
+    const finalCount = parsed.count || countInput;
+
+    const seen = new Set();
+    generated = [];
+
+    // "전체 혼합"(3개 카테고리 모두 + 특정 주제 없음) → 인사 100 + 출석 100 + 나머지 일상
+    const isFullMix = parsed.categories.length === 3
+        && parsed.categories.includes('greet')
+        && parsed.categories.includes('attend')
+        && parsed.categories.includes('daily')
+        && parsed.groups.length === 0;
+
+    if (isFullMix) {
+        let gN, aN, dN;
+        if (finalCount >= 200) {
+            gN = 100; aN = 100; dN = finalCount - 200;
+        } else {
+            gN = Math.max(1, Math.round(finalCount * 0.1));
+            aN = Math.max(1, Math.round(finalCount * 0.1));
+            dN = finalCount - gN - aN;
+        }
+        const targets = [['greet', gN], ['attend', aN], ['daily', dN]];
+        for (const [cat, target] of targets) {
+            let made = 0, att = 0;
+            const maxAtt = target * 200 + 500;
+            while (made < target && att < maxAtt) {
+                att++;
+                const item = generateOne(cat, parsed.groups);
+                if (dedupe && seen.has(item.text)) continue;
+                seen.add(item.text);
+                generated.push(item);
+                made++;
+            }
+        }
+        // 전체 셔플 (같은 카테고리가 그룹지지 않게)
+        for (let i = generated.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [generated[i], generated[j]] = [generated[j], generated[i]];
+        }
+    } else {
+        let attempts = 0;
+        const maxAttempts = finalCount * 200;
+        while (generated.length < finalCount && attempts < maxAttempts) {
+            attempts++;
+            const cat = pick(parsed.categories);
+            const item = generateOne(cat, parsed.groups);
+            if (dedupe && seen.has(item.text)) continue;
+            seen.add(item.text);
+            generated.push(item);
+        }
+    }
+
+    render();
+    showToast(`${generated.length}개 제목 생성 완료!`);
+}
+
+function render() {
+    const area = document.getElementById('resultArea');
+    if (generated.length === 0) {
+        area.innerHTML = '<div class="empty">위에 명령어를 입력하고 <strong>제목 생성하기</strong> 버튼을 눌러주세요</div>';
+        return;
+    }
+
+    const counts = { greet: 0, attend: 0, daily: 0 };
+    for (const it of generated) counts[it.category]++;
+    const TAGS = { greet: '인사', attend: '출석', daily: '일상' };
+
+    let html = `
+        <div class="count-display">
+            <div class="count-card">
+                <div class="num">${generated.length}</div>
+                <div class="label">📊 총 생성된 제목</div>
+            </div>
+            ${counts.greet > 0 ? `<div class="count-card greet"><div class="num small">${counts.greet}</div><div class="label">👋 인사글</div></div>` : ''}
+            ${counts.attend > 0 ? `<div class="count-card attend"><div class="num small">${counts.attend}</div><div class="label">✅ 출석글</div></div>` : ''}
+            ${counts.daily > 0 ? `<div class="count-card daily"><div class="num small">${counts.daily}</div><div class="label">☕ 일상글</div></div>` : ''}
+        </div>
+        <div class="title-list">
+    `;
+
+    generated.forEach((it, i) => {
+        html += `
+            <div class="title-item ${it.category}" onclick="copyOne(this, ${i})">
+                <span class="title-num">${i+1}.</span>
+                <span class="title-text">${escapeHtml(it.text)}</span>
+                <span class="title-tag ${it.category}">${TAGS[it.category]}</span>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    area.innerHTML = html;
+}
+
+async function copyOne(el, idx) {
+    const text = generated[idx].text;
+    try {
+        await navigator.clipboard.writeText(text);
+        const orig = el.style.background;
+        el.style.background = '#d4f5e0';
+        setTimeout(() => el.style.background = orig, 400);
+        showToast(`복사: ${text.substring(0, 30)}${text.length>30?'...':''}`);
+    } catch (e) { showToast('복사 실패'); }
+}
+
+async function copyAll() {
+    if (generated.length === 0) { showToast('먼저 제목을 생성해주세요'); return; }
+    const text = generated.map(it => it.text).join('\n');
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast(`${generated.length}개 제목 전체 복사 완료`);
+    } catch (e) { showToast('복사 실패'); }
+}
+
+function downloadTxt() {
+    if (generated.length === 0) { showToast('먼저 제목을 생성해주세요'); return; }
+    const text = generated.map(it => it.text).join('\r\n');
+    const blob = new Blob(['﻿' + text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+    a.href = url;
+    a.download = `카페제목_${generated.length}개_${ts}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`📥 ${a.download} 저장 완료`);
+}
+
+function clearAll() {
+    document.getElementById('command').value = '';
+    generated = [];
+    render();
+}
+
+function setCmd(text) {
+    document.getElementById('command').value = text;
+    document.getElementById('command').focus();
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+}
+
+document.getElementById('command').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generate();
+});
+
+// ============== 셔플 도구 ==============
+const CAT_LABELS = {
+    greet: '인사', attend: '출석',
+    weather: '날씨', exercise: '운동', food: '음식', place: '장소',
+    child: '육아', health: '건강', work: '직장', stress: '감정',
+    hobby: '취미', travel: '여행', study: '공부', shopping: '쇼핑',
+    unknown: '기타'
+};
+
+function detectLineCategory(line) {
+    if (/안녕|반갑|반가|인사|첫\s*인사|가입.*인사|새내기|뉴비|신입|눈팅|첫\s*글|환영해주세요|잘\s*부탁/.test(line)) return 'greet';
+    if (/출석|출첵|또\s*왔|여기\s*왔|다녀가|체크인|출석체크|도장|들렀|들러|도착했/.test(line)) return 'attend';
+    for (const [kw, group] of Object.entries(KEYWORD_TO_GROUP)) {
+        if (line.includes(kw)) return group;
+    }
+    return 'unknown';
+}
+
+function getCatClass(cat) {
+    if (cat === 'greet') return 'greet';
+    if (cat === 'attend') return 'attend';
+    if (cat === 'unknown') return 'unknown';
+    return 'topic';
+}
+
+function smartShuffle(items) {
+    const buckets = {};
+    for (const it of items) {
+        if (!buckets[it.cat]) buckets[it.cat] = [];
+        buckets[it.cat].push(it);
+    }
+    // 각 버킷 내부 섞기
+    for (const arr of Object.values(buckets)) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    }
+    // Greedy 배분: 가장 많이 남은 버킷 우선, 직전과 다른 카테고리 선택
+    const result = [];
+    let lastCat = null;
+    while (true) {
+        const avail = Object.keys(buckets).filter(k => buckets[k].length > 0);
+        if (avail.length === 0) break;
+        avail.sort((a, b) => buckets[b].length - buckets[a].length);
+        let pickKey = avail.find(k => k !== lastCat);
+        if (!pickKey) pickKey = avail[0];
+        result.push(buckets[pickKey].shift());
+        lastCat = pickKey;
+    }
+    return result;
+}
+
+function simpleShuffle(items) {
+    const arr = [...items];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+let shuffleResult = [];
+
+function doShuffle() {
+    const text = document.getElementById('shuffleInput').value.trim();
+    if (!text) { showToast('셔플할 제목을 붙여넣어주세요'); return; }
+
+    const dedupe = document.getElementById('shuffleDedupe').checked;
+    const mode = document.querySelector('input[name="shuffleMode"]:checked').value;
+
+    const seen = new Set();
+    let items = [];
+    for (let line of text.split(/\r?\n/)) {
+        line = line.replace(/^\s*\d+[\t\.\)\s]+/, '').trim();
+        if (!line) continue;
+        if (dedupe && seen.has(line)) continue;
+        seen.add(line);
+        items.push({ text: line, cat: detectLineCategory(line) });
+    }
+
+    if (items.length === 0) { showToast('유효한 제목이 없습니다'); return; }
+
+    shuffleResult = mode === 'smart' ? smartShuffle(items) : simpleShuffle(items);
+
+    // 연달아 같은 카테고리가 몇 개 있는지 분석
+    let conflicts = 0;
+    for (let i = 1; i < shuffleResult.length; i++) {
+        if (shuffleResult[i].cat === shuffleResult[i-1].cat) conflicts++;
+    }
+    renderShuffle(conflicts);
+    showToast(`${shuffleResult.length}개 셔플 완료! (연속 충돌 ${conflicts}개)`);
+}
+
+function renderShuffle(conflicts = 0) {
+    const area = document.getElementById('shuffleResultArea');
+    if (shuffleResult.length === 0) {
+        area.innerHTML = '';
+        return;
+    }
+    const counts = {};
+    for (const it of shuffleResult) counts[it.cat] = (counts[it.cat] || 0) + 1;
+
+    const sortedCats = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+    let html = `
+        <div class="count-display">
+            <div class="count-card">
+                <div class="num">${shuffleResult.length}</div>
+                <div class="label">📊 총 셔플된 제목</div>
+            </div>
+            <div class="count-card ${conflicts === 0 ? 'greet' : 'attend'}">
+                <div class="num small">${conflicts}</div>
+                <div class="label">${conflicts === 0 ? '✅ 완벽한 분산' : '⚠️ 연속 충돌'}</div>
+            </div>
+            <div class="count-card daily">
+                <div class="num small">${Object.keys(counts).length}</div>
+                <div class="label">🎨 분류된 소재</div>
+            </div>
+        </div>
+
+        <div class="cat-summary">
+            ${sortedCats.map(([k, v]) => `<span class="cat-pill">${CAT_LABELS[k] || k} ${v}개</span>`).join('')}
+        </div>
+
+        <div class="title-list">
+    `;
+
+    shuffleResult.forEach((it, i) => {
+        const cls = getCatClass(it.cat);
+        html += `
+            <div class="title-item ${cls}" onclick="copyShuffleOne(this, ${i})">
+                <span class="title-num">${i+1}.</span>
+                <span class="title-text">${escapeHtml(it.text)}</span>
+                <span class="title-tag ${cls}">${CAT_LABELS[it.cat] || it.cat}</span>
+            </div>
+        `;
+    });
+    html += '</div>';
+    area.innerHTML = html;
+}
+
+async function copyShuffleOne(el, idx) {
+    const text = shuffleResult[idx].text;
+    try {
+        await navigator.clipboard.writeText(text);
+        const orig = el.style.background;
+        el.style.background = '#d4f5e0';
+        setTimeout(() => el.style.background = orig, 400);
+        showToast(`복사: ${text.substring(0, 30)}${text.length>30?'...':''}`);
+    } catch (e) { showToast('복사 실패'); }
+}
+
+async function copyShuffleResult() {
+    if (shuffleResult.length === 0) { showToast('먼저 셔플을 실행해주세요'); return; }
+    const text = shuffleResult.map(it => it.text).join('\n');
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast(`${shuffleResult.length}개 셔플 결과 복사 완료`);
+    } catch (e) { showToast('복사 실패'); }
+}
+
+function downloadShuffleTxt() {
+    if (shuffleResult.length === 0) { showToast('먼저 셔플을 실행해주세요'); return; }
+    const text = shuffleResult.map(it => it.text).join('\r\n');
+    const blob = new Blob(['﻿' + text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+    a.href = url;
+    a.download = `셔플결과_${shuffleResult.length}개_${ts}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`📥 ${a.download} 저장 완료`);
+}
+
+function clearShuffle() {
+    document.getElementById('shuffleInput').value = '';
+    shuffleResult = [];
+    renderShuffle();
+}
+
+function loadGeneratedToShuffle() {
+    if (!generated || generated.length === 0) {
+        showToast('위에서 먼저 제목을 생성해주세요');
+        return;
+    }
+    const text = generated.map(it => it.text).join('\n');
+    document.getElementById('shuffleInput').value = text;
+    showToast(`${generated.length}개 제목을 셔플 입력칸에 가져왔습니다`);
+    document.getElementById('shuffleInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+</script>
+</body>
+</html>
